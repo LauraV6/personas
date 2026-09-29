@@ -29,8 +29,8 @@
     $iconBox = 'flex size-9 items-center justify-center rounded-xl';
     $field = 'h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm shadow-xs outline-none transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-indigo-400 dark:hover:border-zinc-600 focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-indigo-500';
     $loadingTargets = 'search,gender,setStatus,sortBy,resetFilters,gotoPage,nextPage,previousPage,delete';
-    $buttonBase = 'inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition focus-visible:ring-4 focus-visible:outline-none active:scale-[0.98] disabled:opacity-60';
-    $primaryButton = $buttonBase.' bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:ring-indigo-500/30 dark:bg-indigo-500 dark:hover:bg-indigo-400';
+    $buttonBase = 'inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition focus-visible:ring-4 focus-visible:outline-none enabled:active:scale-[0.98] disabled:opacity-50';
+    $primaryButton = $buttonBase.' bg-indigo-600 text-white shadow-sm enabled:hover:bg-indigo-500 focus-visible:ring-indigo-500/30 dark:bg-indigo-500 dark:enabled:hover:bg-indigo-400';
     $secondaryButton = $buttonBase.' bg-white text-zinc-700 ring-1 ring-zinc-200 ring-inset hover:bg-zinc-50 hover:text-zinc-900 focus-visible:ring-zinc-900/10 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-white';
     $dangerButton = $buttonBase.' bg-rose-600 text-white shadow-sm hover:bg-rose-500 focus-visible:ring-rose-500/30';
 @endphp
@@ -374,66 +374,13 @@
     </section>
 
     {{-- Bewerkvenster --}}
-    @if ($editingId !== null)
-        <div class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="edit-title" x-data="{ init() { document.body.style.overflow = 'hidden' }, destroy() { document.body.style.overflow = '' } }" x-on:keydown.escape.window="$wire.cancelEdit()">
-            <div class="animate-fade-in absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="cancelEdit" aria-hidden="true"></div>
-
-            <form wire:submit="save" novalidate class="animate-modal-in relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-zinc-900/5 dark:bg-zinc-900 dark:ring-white/10"
-                x-data="{ originalFirstName: @js($form['first_name']) }" x-init="$nextTick(() => $el.querySelector('input')?.focus())">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <h2 id="edit-title" class="text-lg font-semibold tracking-tight">Persoon bewerken</h2>
-                        <p class="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">Pas de gegevens aan en sla ze op.</p>
-                    </div>
-                    <button wire:click="cancelEdit" type="button" aria-label="Sluiten" class="-mt-1 -mr-2 inline-flex size-8 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none dark:hover:bg-zinc-800 dark:hover:text-white">
-                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="mt-6 space-y-4">
-                    @foreach (['first_name' => ['Voornaam', 'text', 'given-name'], 'last_name' => ['Achternaam', 'text', 'family-name'], 'email' => ['E-mailadres', 'email', 'email']] as $name => [$label, $type, $autocomplete])
-                        <div>
-                            <label for="form-{{ $name }}" class="block text-sm font-medium">{{ $label }}</label>
-                            <input wire:model="form.{{ $name }}" id="form-{{ $name }}" type="{{ $type }}" autocomplete="{{ $autocomplete }}"
-                                @error("form.{$name}") aria-invalid="true" aria-describedby="form-{{ $name }}-error" @enderror
-                                @class([
-                                    $field.' mt-1.5 w-full',
-                                    'border-rose-300 focus:border-rose-400 focus:ring-rose-500/10 dark:border-rose-500/50' => $errors->has("form.{$name}"),
-                                ])>
-                            @error("form.{$name}")
-                                <p id="form-{{ $name }}-error" class="mt-1.5 text-sm text-rose-600 dark:text-rose-400">{{ $message }}</p>
-                            @enderror
-                            @if ($name === 'first_name')
-                                <p x-show="$wire.form.first_name !== originalFirstName" x-cloak class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
-                                    <svg class="mt-px size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-                                    </svg>
-                                    Leeftijd, geslacht en nationaliteit worden opnieuw opgehaald voor de nieuwe voornaam.
-                                </p>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <button wire:click="cancelEdit" type="button" class="{{ $secondaryButton }}">Annuleren</button>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="save" class="{{ $primaryButton }}">
-                        <svg wire:loading wire:target="save" class="size-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"></path>
-                        </svg>
-                        Opslaan
-                    </button>
-                </div>
-            </form>
-        </div>
+    @if ($this->editingPerson !== null)
+        @include('livewire.partials.edit-person-modal', ['person' => $this->editingPerson])
     @endif
 
     {{-- Verwijdervenster --}}
     @if ($this->deletingPerson !== null)
-        <div class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" aria-describedby="delete-description" x-data="{ init() { document.body.style.overflow = 'hidden' }, destroy() { document.body.style.overflow = '' } }" x-on:keydown.escape.window="$wire.cancelDelete()">
+        <div class="fixed inset-0 m-0 z-50 flex items-end justify-center p-4 sm:items-center" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" aria-describedby="delete-description" x-data="{ init() { document.body.style.overflow = 'hidden' }, destroy() { document.body.style.overflow = '' } }" x-on:keydown.escape.window="$wire.cancelDelete()">
             <div class="animate-fade-in absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="cancelDelete" aria-hidden="true"></div>
 
             <div class="animate-modal-in relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-zinc-900/5 dark:bg-zinc-900 dark:ring-white/10">
@@ -458,7 +405,7 @@
     @endif
 
     {{-- Meldingen --}}
-    <div class="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 p-4 sm:items-end sm:p-6" aria-live="polite"
+    <div class="pointer-events-none fixed inset-x-0 bottom-0 z-[60] m-0 flex flex-col items-center gap-2 p-4 sm:items-end sm:p-6" aria-live="polite"
         x-data="{ toasts: [], add(detail) { const id = Date.now() + Math.random(); this.toasts.push({ id, ...detail }); setTimeout(() => this.remove(id), 4000) }, remove(id) { this.toasts = this.toasts.filter(t => t.id !== id) } }"
         x-on:notify.window="add($event.detail)">
         <template x-for="toast in toasts" :key="toast.id">

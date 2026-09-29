@@ -157,6 +157,12 @@ class PeopleDashboard extends Component
     }
 
     #[Computed]
+    public function editingPerson(): ?Person
+    {
+        return $this->editingId !== null ? Person::find($this->editingId) : null;
+    }
+
+    #[Computed]
     public function deletingPerson(): ?Person
     {
         return $this->deletingId !== null ? Person::find($this->deletingId) : null;
