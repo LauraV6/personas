@@ -27,6 +27,7 @@ it('calculates the stats', function () {
 
     expect(Livewire::test(PeopleDashboard::class)->instance()->stats)->toBe([
         'total' => 4,
+        'today' => 4,
         'enriched' => 3,
         'pending' => 1,
         'average_age' => 36,
@@ -54,7 +55,7 @@ it('filters on gender', function () {
     Person::factory()->enriched()->create(['first_name' => 'Sanne', 'estimated_gender' => 'female']);
     Person::factory()->enriched()->create(['first_name' => 'Pieter', 'estimated_gender' => 'male']);
     Person::factory()->enriched()->create(['first_name' => 'Xyzzy', 'estimated_gender' => null]);
-    Person::factory()->create(['first_name' => 'Wachtend']);
+    Person::factory()->create(['first_name' => 'Wilhelmina']);
 
     Livewire::test(PeopleDashboard::class)
         ->set('gender', 'female')
@@ -63,20 +64,20 @@ it('filters on gender', function () {
         ->set('gender', 'unknown')
         ->assertSee('Xyzzy')
         ->assertDontSee('Sanne')
-        ->assertDontSee('Wachtend');
+        ->assertDontSee('Wilhelmina');
 });
 
 it('filters on status', function () {
     Person::factory()->enriched()->create(['first_name' => 'Sanne']);
-    Person::factory()->create(['first_name' => 'Wachtend']);
+    Person::factory()->create(['first_name' => 'Wilhelmina']);
 
     Livewire::test(PeopleDashboard::class)
         ->set('status', 'pending')
-        ->assertSee('Wachtend')
+        ->assertSee('Wilhelmina')
         ->assertDontSee('Sanne')
         ->set('status', 'enriched')
         ->assertSee('Sanne')
-        ->assertDontSee('Wachtend');
+        ->assertDontSee('Wilhelmina');
 });
 
 it('polls only while people are waiting for their data', function () {
@@ -98,4 +99,49 @@ it('offers to clear the filters when nothing matches', function () {
         ->call('resetFilters')
         ->assertSet('search', '')
         ->assertSee('Laura');
+});
+
+it('switches status with the tabs', function () {
+    Person::factory()->enriched()->create(['first_name' => 'Sanne']);
+    Person::factory()->create(['first_name' => 'Wilhelmina']);
+
+    Livewire::test(PeopleDashboard::class)
+        ->call('setStatus', 'pending')
+        ->assertSet('status', 'pending')
+        ->assertSee('Wilhelmina')
+        ->assertDontSee('Sanne')
+        ->call('setStatus', 'onzin')
+        ->assertSet('status', '');
+});
+
+it('sorts on a column and flips the direction on a second click', function () {
+    Person::factory()->enriched()->create(['first_name' => 'Jong', 'estimated_age' => 20]);
+    Person::factory()->enriched()->create(['first_name' => 'Oud', 'estimated_age' => 70]);
+
+    Livewire::test(PeopleDashboard::class)
+        ->call('sortBy', 'age')
+        ->assertSet('direction', 'asc')
+        ->assertSeeInOrder(['Jong', 'Oud'])
+        ->call('sortBy', 'age')
+        ->assertSet('direction', 'desc')
+        ->assertSeeInOrder(['Oud', 'Jong']);
+});
+
+it('ignores unknown sort columns', function () {
+    Livewire::test(PeopleDashboard::class)
+        ->call('sortBy', 'email; drop table people')
+        ->assertSet('sort', 'created');
+});
+
+it('shows the most common nationalities and age groups', function () {
+    Person::factory()->enriched()->count(2)->create(['estimated_nationality' => 'NL', 'estimated_age' => 34]);
+    Person::factory()->enriched()->create(['estimated_nationality' => 'BE', 'estimated_age' => 71]);
+
+    $dashboard = Livewire::test(PeopleDashboard::class)->instance();
+
+    expect($dashboard->topCountries)->toBe([
+        ['code' => 'NL', 'name' => 'Nederland', 'flag' => '🇳🇱', 'count' => 2],
+        ['code' => 'BE', 'name' => 'België', 'flag' => '🇧🇪', 'count' => 1],
+    ])
+        ->and($dashboard->ageGroups)->toMatchArray(['30' => 2, '70+' => 1, '20' => 0]);
 });

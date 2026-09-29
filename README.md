@@ -53,7 +53,7 @@ php artisan person:export --output=personen.json
 php artisan serve
 ```
 
-Op http://127.0.0.1:8000 staat een dashboard met kerncijfers (aantal personen, hoeveel er aangevuld zijn, gemiddelde leeftijd, verdeling van het geslacht) en de lijst met personen. Je kunt zoeken op naam en e-mailadres en filteren op geslacht en status. Met de knop Exporteer download je de personen die bij je filters horen als JSON. Zolang er personen op hun gegevens wachten, ververst de pagina zich elke 5 seconden, zodat je de queue-job live ziet binnenkomen.
+Op http://127.0.0.1:8000 staat een dashboard met kerncijfers (aantal personen, hoeveel er aangevuld zijn, gemiddelde leeftijd, verdeling van het geslacht) en de lijst met personen. Je kunt zoeken op naam en e-mailadres, filteren op geslacht en status, en sorteren op naam, leeftijd en datum. Met de knop Exporteer JSON download je de personen die bij je filters horen als JSON. Zolang er personen op hun gegevens wachten, ververst de pagina zich elke 5 seconden, zodat je de queue-job live ziet binnenkomen.
 
 ## Opzet
 

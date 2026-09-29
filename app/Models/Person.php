@@ -61,28 +61,32 @@ class Person extends Model
         };
     }
 
+    public function nationalityLabel(): ?string
+    {
+        return $this->estimated_nationality !== null ? self::countryName($this->estimated_nationality) : null;
+    }
+
+    public function nationalityFlag(): ?string
+    {
+        return $this->estimated_nationality !== null ? self::countryFlag($this->estimated_nationality) : null;
+    }
+
     /**
      * Landnaam in het Nederlands, bijvoorbeeld "Nederland" voor NL.
      */
-    public function nationalityLabel(): ?string
+    public static function countryName(string $code): string
     {
-        return $this->estimated_nationality !== null
-            ? Locale::getDisplayRegion("-{$this->estimated_nationality}", 'nl')
-            : null;
+        return Locale::getDisplayRegion("-{$code}", 'nl');
     }
 
     /**
      * Vlag-emoji bij de landcode, opgebouwd uit twee regionale letters.
      */
-    public function nationalityFlag(): ?string
+    public static function countryFlag(string $code): string
     {
-        if ($this->estimated_nationality === null) {
-            return null;
-        }
-
         return implode('', array_map(
             fn (string $letter) => mb_chr(0x1F1E6 + ord($letter) - ord('A')),
-            str_split($this->estimated_nationality),
+            str_split(strtoupper($code)),
         ));
     }
 }
