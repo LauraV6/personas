@@ -16,17 +16,13 @@
 
 <div @if ($stats['pending'] > 0) wire:poll.5s.visible @endif class="space-y-8">
     {{-- Kop --}}
-    <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <header>
         <div>
             <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400">Personas</p>
             <h1 class="mt-1 text-3xl font-semibold tracking-tight">Personen</h1>
             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 Leeftijd en geslacht worden na het toevoegen op de achtergrond geschat op basis van de voornaam.
             </p>
-        </div>
-
-        <div class="flex items-center gap-2 self-start rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-xs text-zinc-600 shadow-xs sm:self-auto dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
-            <span class="text-zinc-400">$</span> php artisan person:add
         </div>
     </header>
 
