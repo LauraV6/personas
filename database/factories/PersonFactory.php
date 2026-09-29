@@ -37,6 +37,7 @@ class PersonFactory extends Factory
                 'estimated_age' => fake()->numberBetween(18, 80),
                 'estimated_gender' => $gender,
                 'gender_probability' => fake()->randomFloat(2, 0.6, 1),
+                'estimated_nationality' => fake()->randomElement(['NL', 'NL', 'NL', 'BE', 'DE', 'GB', 'TR', 'MA']),
                 'enriched_at' => now(),
             ];
         });

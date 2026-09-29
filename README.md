@@ -1,6 +1,6 @@
 # Personas
 
-Kleine Laravel-applicatie voor het beheren van personen. Een persoon wordt via de CLI toegevoegd. Daarna haalt een queue-job op de achtergrond de geschatte leeftijd ([agify.io](https://agify.io)) en het geschatte geslacht ([genderize.io](https://genderize.io)) op, op basis van de voornaam, en slaat die op bij de persoon.
+Kleine Laravel-applicatie voor het beheren van personen. Een persoon wordt via de CLI toegevoegd. Daarna haalt een queue-job op de achtergrond de geschatte leeftijd ([agify.io](https://agify.io)), het geschatte geslacht ([genderize.io](https://genderize.io)) en de geschatte nationaliteit ([nationalize.io](https://nationalize.io)) op, op basis van de voornaam, en slaat die op bij de persoon.
 
 ## Installatie
 
@@ -40,13 +40,20 @@ Overzicht bekijken in de terminal:
 php artisan person:list
 ```
 
+Exporteren als JSON, naar de terminal of naar een bestand:
+
+```bash
+php artisan person:export
+php artisan person:export --output=personen.json
+```
+
 ## Dashboard
 
 ```bash
 php artisan serve
 ```
 
-Op http://127.0.0.1:8000 staat een dashboard met kerncijfers (aantal personen, hoeveel er aangevuld zijn, gemiddelde leeftijd, verdeling van het geslacht) en de lijst met personen. Je kunt zoeken op naam en e-mailadres en filteren op geslacht en status. Zolang er personen op hun gegevens wachten, ververst de pagina zich elke 5 seconden, zodat je de queue-job live ziet binnenkomen.
+Op http://127.0.0.1:8000 staat een dashboard met kerncijfers (aantal personen, hoeveel er aangevuld zijn, gemiddelde leeftijd, verdeling van het geslacht) en de lijst met personen. Je kunt zoeken op naam en e-mailadres en filteren op geslacht en status. Met de knop Exporteer download je de personen die bij je filters horen als JSON. Zolang er personen op hun gegevens wachten, ververst de pagina zich elke 5 seconden, zodat je de queue-job live ziet binnenkomen.
 
 ## Opzet
 
@@ -54,14 +61,15 @@ Op http://127.0.0.1:8000 staat een dashboard met kerncijfers (aantal personen, h
 |---|---|
 | Tabel `people` | `database/migrations/*_create_people_table.php` |
 | Model | `app/Models/Person.php` |
-| CLI-commando's | `app/Console/Commands/AddPerson.php`, `ListPeople.php` |
-| Ophalen van leeftijd en geslacht | `app/Jobs/EnrichPerson.php` |
+| CLI-commando's | `app/Console/Commands/AddPerson.php`, `ListPeople.php`, `ExportPeople.php` |
+| Ophalen van leeftijd, geslacht en nationaliteit | `app/Jobs/EnrichPerson.php` |
+| JSON-export | `app/Actions/ExportPeopleAsJson.php`, `app/Http/Resources/PersonResource.php` |
 | Dashboard (Livewire) | `app/Livewire/PeopleDashboard.php`, `resources/views/livewire/people-dashboard.blade.php` |
 
-- De job doet beide API-verzoeken parallel via `Http::pool`.
+- De job doet de drie API-verzoeken parallel via `Http::pool`. Van nationalize.io bewaren we het land met de grootste kans.
 - Faalt een verzoek (bijvoorbeeld door de rate limit), dan probeert de queue het tot 3 keer opnieuw, met 10, 30 en 60 seconden wachttijd.
-- De gratis versie van beide API's staat 100 namen per dag toe.
-- Bij een onbekende naam blijven leeftijd en geslacht leeg, maar wordt `enriched_at` wel gezet.
+- De gratis versie van de API's staat 10 namen per dag toe.
+- Bij een onbekende naam blijven leeftijd, geslacht en nationaliteit leeg, maar wordt `enriched_at` wel gezet.
 
 ## Tests en codestijl
 

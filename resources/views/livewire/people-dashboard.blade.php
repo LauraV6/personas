@@ -21,7 +21,7 @@
             <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400">Personas</p>
             <h1 class="mt-1 text-3xl font-semibold tracking-tight">Personen</h1>
             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Leeftijd en geslacht worden na het toevoegen op de achtergrond geschat op basis van de voornaam.
+                Leeftijd, geslacht en nationaliteit worden na het toevoegen op de achtergrond geschat op basis van de voornaam.
             </p>
         </div>
     </header>
@@ -109,6 +109,13 @@
                         <option value="pending">Wacht op gegevens</option>
                     </select>
                 </label>
+
+                <button wire:click="export" type="button" title="Download de personen die bij de filters horen als JSON" class="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-zinc-900 px-3 text-sm font-medium text-white shadow-xs transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200" wire:loading.attr="disabled" wire:target="export">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />
+                    </svg>
+                    Exporteer
+                </button>
             </div>
         </div>
 
@@ -134,6 +141,7 @@
                             <th scope="col" class="px-4 py-3 font-medium">Persoon</th>
                             <th scope="col" class="px-4 py-3 font-medium">Leeftijd</th>
                             <th scope="col" class="px-4 py-3 font-medium">Geslacht</th>
+                            <th scope="col" class="px-4 py-3 font-medium">Nationaliteit</th>
                             <th scope="col" class="px-4 py-3 font-medium">Status</th>
                             <th scope="col" class="hidden px-4 py-3 font-medium md:table-cell">Toegevoegd</th>
                         </tr>
@@ -169,6 +177,19 @@
                                             'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300' => $person->estimated_gender === 'male',
                                             'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' => $person->estimated_gender === null,
                                         ])>{{ $person->genderLabel() }}</span>
+                                    @else
+                                        <span class="text-zinc-400">-</span>
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    @if ($person->estimated_nationality !== null)
+                                        <span class="inline-flex items-center gap-2">
+                                            <span class="text-base leading-none" aria-hidden="true">{{ $person->nationalityFlag() }}</span>
+                                            {{ $person->nationalityLabel() }}
+                                        </span>
+                                    @elseif ($person->isEnriched())
+                                        <span class="text-zinc-400">Onbekend</span>
                                     @else
                                         <span class="text-zinc-400">-</span>
                                     @endif

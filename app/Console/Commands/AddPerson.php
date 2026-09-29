@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use function Laravel\Prompts\text;
 
 #[Signature('person:add {first_name? : Voornaam} {last_name? : Achternaam} {email? : E-mailadres}')]
-#[Description('Voeg een nieuw persoon toe en haal op de achtergrond leeftijd en geslacht op')]
+#[Description('Voeg een nieuw persoon toe en haal op de achtergrond leeftijd, geslacht en nationaliteit op')]
 class AddPerson extends Command
 {
     public function handle(): int
@@ -42,7 +42,7 @@ class AddPerson extends Command
         EnrichPerson::dispatch($person);
 
         $this->info("{$person->fullName()} is toegevoegd (id {$person->id}).");
-        $this->line('Leeftijd en geslacht worden op de achtergrond opgehaald. Start de worker met: php artisan queue:work');
+        $this->line('Leeftijd, geslacht en nationaliteit worden op de achtergrond opgehaald. Start de worker met: php artisan queue:work');
 
         return self::SUCCESS;
     }
