@@ -8,3 +8,18 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+@layer base {
+    /* Tailwind 4 geeft knoppen geen handcursor meer, dit zet hem terug voor alles wat klikbaar is. */
+    button:not(:disabled),
+    [role='button']:not(:disabled),
+    select:not(:disabled),
+    summary,
+    label:has(> input[type='checkbox'], > input[type='radio']) {
+        cursor: pointer;
+    }
+
+    :disabled {
+        cursor: not-allowed;
+    }
+}

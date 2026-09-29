@@ -4,7 +4,7 @@
 
 <th scope="col" {{ $attributes->class('px-4 py-3 font-medium') }} aria-sort="{{ $active ? ($direction === 'asc' ? 'ascending' : 'descending') : 'none' }}">
     <button wire:click="sortBy('{{ $column }}')" type="button" @class([
-        'group inline-flex items-center gap-1 rounded transition hover:text-zinc-900 dark:hover:text-white',
+        'group -mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 transition hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none dark:hover:bg-zinc-800 dark:hover:text-white',
         'text-zinc-900 dark:text-white' => $active,
     ])>
         {{ $slot }}

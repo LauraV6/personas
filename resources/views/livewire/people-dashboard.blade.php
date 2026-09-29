@@ -27,7 +27,7 @@
 
     $card = 'relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm shadow-zinc-900/[0.03] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none';
     $iconBox = 'flex size-9 items-center justify-center rounded-xl';
-    $field = 'h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm shadow-xs outline-none transition placeholder:text-zinc-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-indigo-500';
+    $field = 'h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm shadow-xs outline-none transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-indigo-400 dark:hover:border-zinc-600 focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-indigo-500';
     $skeleton = 'inline-block h-2.5 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-700/70';
     $loadingTargets = 'search,gender,setStatus,sortBy,resetFilters,gotoPage,nextPage,previousPage';
 @endphp
@@ -54,9 +54,13 @@
             </p>
         </div>
 
-        <button wire:click="export" wire:loading.attr="disabled" wire:target="export" type="button" title="Download de personen die bij je filters horen als JSON" class="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-500 focus-visible:ring-4 focus-visible:ring-indigo-500/30 focus-visible:outline-none disabled:opacity-60 sm:self-auto dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400">
-            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+        <button wire:click="export" wire:loading.attr="disabled" wire:target="export" type="button" title="Download de personen die bij je filters horen als JSON" class="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white shadow-sm shadow-indigo-600/20 transition hover:-translate-y-px hover:bg-indigo-500 hover:shadow-md hover:shadow-indigo-600/25 focus-visible:ring-4 active:translate-y-0 active:scale-[0.98] focus-visible:ring-indigo-500/30 focus-visible:outline-none disabled:opacity-60 sm:self-auto dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400">
+            <svg wire:loading.remove wire:target="export" class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <svg wire:loading wire:target="export" class="size-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"></path>
             </svg>
             Exporteer JSON
         </button>
@@ -189,9 +193,9 @@
             <nav class="grid grid-cols-3 gap-1 rounded-xl bg-zinc-100/80 p-1 sm:inline-flex sm:self-start lg:self-auto dark:bg-zinc-800/60" aria-label="Status">
                 @foreach ($tabs as $value => [$label, $count])
                     <button wire:click="setStatus('{{ $value }}')" type="button" aria-pressed="{{ $status === $value ? 'true' : 'false' }}" @class([
-                        'inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium transition sm:gap-2 sm:px-3',
+                        'inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none sm:gap-2 sm:px-3',
                         'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white' => $status === $value,
-                        'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white' => $status !== $value,
+                        'text-zinc-500 hover:bg-white/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700/50 dark:hover:text-white' => $status !== $value,
                     ])>
                         {{ $label }}
                         <span @class([
@@ -238,7 +242,7 @@
                 @else
                     <p class="mt-4 font-medium">Geen personen gevonden</p>
                     <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Er is niemand die past bij deze zoekopdracht of filters.</p>
-                    <button wire:click="resetFilters" type="button" class="mt-4 rounded-lg px-3 py-1.5 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10">
+                    <button wire:click="resetFilters" type="button" class="mt-4 rounded-lg px-3 py-1.5 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none dark:text-indigo-400 dark:hover:bg-indigo-500/10">
                         Filters wissen
                     </button>
                 @endif
