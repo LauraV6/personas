@@ -39,4 +39,23 @@ class Person extends Model
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    public function initials(): string
+    {
+        return mb_strtoupper(mb_substr($this->first_name, 0, 1).mb_substr($this->last_name, 0, 1));
+    }
+
+    public function isEnriched(): bool
+    {
+        return $this->enriched_at !== null;
+    }
+
+    public function genderLabel(): string
+    {
+        return match ($this->estimated_gender) {
+            'female' => 'Vrouw',
+            'male' => 'Man',
+            default => 'Onbekend',
+        };
+    }
 }

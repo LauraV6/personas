@@ -23,4 +23,22 @@ class PersonFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
         ];
     }
+
+    /**
+     * Een persoon waarvoor leeftijd en geslacht al zijn opgehaald.
+     */
+    public function enriched(): static
+    {
+        return $this->state(function () {
+            $gender = fake()->randomElement(['female', 'male']);
+
+            return [
+                'first_name' => fake()->firstName($gender),
+                'estimated_age' => fake()->numberBetween(18, 80),
+                'estimated_gender' => $gender,
+                'gender_probability' => fake()->randomFloat(2, 0.6, 1),
+                'enriched_at' => now(),
+            ];
+        });
+    }
 }
