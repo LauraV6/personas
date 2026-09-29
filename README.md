@@ -10,6 +10,14 @@ cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
 php artisan migrate
+npm install
+npm run build
+```
+
+Voorbeelddata, zonder de API's aan te roepen:
+
+```bash
+php artisan db:seed
 ```
 
 ## Gebruik
@@ -26,11 +34,19 @@ Queue-worker starten, zodat de gegevens worden opgehaald:
 php artisan queue:work
 ```
 
-Overzicht bekijken:
+Overzicht bekijken in de terminal:
 
 ```bash
 php artisan person:list
 ```
+
+## Dashboard
+
+```bash
+php artisan serve
+```
+
+Op http://127.0.0.1:8000 staat een dashboard met kerncijfers (aantal personen, hoeveel er aangevuld zijn, gemiddelde leeftijd, verdeling van het geslacht) en de lijst met personen. Je kunt zoeken op naam en e-mailadres en filteren op geslacht en status. Zolang er personen op hun gegevens wachten, ververst de pagina zich elke 5 seconden, zodat je de queue-job live ziet binnenkomen.
 
 ## Opzet
 
@@ -40,6 +56,7 @@ php artisan person:list
 | Model | `app/Models/Person.php` |
 | CLI-commando's | `app/Console/Commands/AddPerson.php`, `ListPeople.php` |
 | Ophalen van leeftijd en geslacht | `app/Jobs/EnrichPerson.php` |
+| Dashboard (Livewire) | `app/Livewire/PeopleDashboard.php`, `resources/views/livewire/people-dashboard.blade.php` |
 
 - De job doet beide API-verzoeken parallel via `Http::pool`.
 - Faalt een verzoek (bijvoorbeeld door de rate limit), dan probeert de queue het tot 3 keer opnieuw, met 10, 30 en 60 seconden wachttijd.
