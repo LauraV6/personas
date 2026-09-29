@@ -32,6 +32,7 @@ class UpdatePerson
                 'gender_probability' => null,
                 'estimated_nationality' => null,
                 'enriched_at' => null,
+                'enrichment_failed_at' => null,
             ]);
         }
 

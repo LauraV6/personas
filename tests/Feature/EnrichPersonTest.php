@@ -63,3 +63,30 @@ it('throws on a failing api so the queue retries the job', function () {
     expect(fn () => (new EnrichPerson($person))->handle())->toThrow(RequestException::class)
         ->and($person->fresh()->enriched_at)->toBeNull();
 });
+
+it('marks the person as failed after the last attempt', function () {
+    $person = Person::factory()->create();
+
+    (new EnrichPerson($person))->failed(new RuntimeException('Request limit reached'));
+
+    expect($person->fresh())
+        ->enrichment_failed_at->not->toBeNull()
+        ->enrichmentFailed()->toBeTrue();
+});
+
+it('clears the failed mark when a later attempt succeeds', function () {
+    Http::fake([
+        'api.agify.io*' => Http::response(['age' => 42]),
+        'api.genderize.io*' => Http::response(['gender' => 'female', 'probability' => 0.98]),
+        'api.nationalize.io*' => Http::response(['country' => []]),
+    ]);
+
+    $person = Person::factory()->create(['enrichment_failed_at' => now()]);
+
+    EnrichPerson::dispatchSync($person);
+
+    expect($person->fresh())
+        ->enrichment_failed_at->toBeNull()
+        ->enrichmentFailed()->toBeFalse()
+        ->estimated_age->toBe(42);
+});

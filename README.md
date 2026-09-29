@@ -77,7 +77,7 @@ Op http://127.0.0.1:8000 staat een dashboard met kerncijfers (aantal personen, h
 | Dashboard (Livewire) | `app/Livewire/PeopleDashboard.php`, `resources/views/livewire/people-dashboard.blade.php` |
 
 - De job doet de drie API-verzoeken parallel via `Http::pool`. Van nationalize.io bewaren we het land met de grootste kans.
-- Faalt een verzoek (bijvoorbeeld door de rate limit), dan probeert de queue het tot 3 keer opnieuw, met 10, 30 en 60 seconden wachttijd.
+- Faalt een verzoek (bijvoorbeeld door de rate limit), dan probeert de queue het tot 3 keer opnieuw, met 10, 30 en 60 seconden wachttijd. Mislukt ook de laatste poging, dan krijgt de persoon de status Mislukt en kun je het op het dashboard opnieuw proberen.
 - De gratis versie van de API's staat 10 namen per dag toe.
 - Wordt een persoon verwijderd terwijl zijn job nog in de wachtrij staat, dan verdwijnt de job zonder fout (`#[DeleteWhenMissingModels]`).
 - Bij een onbekende naam blijven leeftijd, geslacht en nationaliteit leeg, maar wordt `enriched_at` wel gezet.

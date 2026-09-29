@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Actions\ExportPeopleAsJson;
+use App\Actions\RetryEnrichment;
 use App\Actions\UpdatePerson;
 use App\Models\Person;
 use Illuminate\Contracts\View\View;
@@ -51,7 +52,7 @@ class PeopleDashboard extends Component
 
     public function setStatus(string $status): void
     {
-        $this->status = in_array($status, ['enriched', 'pending']) ? $status : '';
+        $this->status = in_array($status, ['enriched', 'pending', 'failed']) ? $status : '';
         $this->resetPage();
     }
 
@@ -131,6 +132,18 @@ class PeopleDashboard extends Component
             : "{$person->fullName()} is bijgewerkt.");
     }
 
+    public function retry(int $id, RetryEnrichment $retryEnrichment): void
+    {
+        $person = Person::find($id);
+
+        if ($person === null || ! $person->enrichmentFailed()) {
+            return;
+        }
+
+        $retryEnrichment->handle($person);
+        $this->notify("De gegevens van {$person->fullName()} worden opnieuw opgehaald.");
+    }
+
     public function confirmDelete(int $id): void
     {
         $this->deletingId = Person::whereKey($id)->exists() ? $id : null;
@@ -171,7 +184,7 @@ class PeopleDashboard extends Component
     /**
      * Kerncijfers voor de kaarten bovenaan, in één query.
      *
-     * @return array{total: int, today: int, enriched: int, pending: int, average_age: ?int, female: int, male: int, unknown: int}
+     * @return array{total: int, today: int, enriched: int, pending: int, failed: int, average_age: ?int, female: int, male: int, unknown: int}
      */
     #[Computed]
     public function stats(): array
@@ -180,6 +193,7 @@ class PeopleDashboard extends Component
             ->selectRaw('count(*) as total')
             ->selectRaw('sum(case when created_at >= ? then 1 else 0 end) as today', [today()->toDateTimeString()])
             ->selectRaw('count(enriched_at) as enriched')
+            ->selectRaw('sum(case when enriched_at is null and enrichment_failed_at is not null then 1 else 0 end) as failed')
             ->selectRaw('avg(estimated_age) as average_age')
             ->selectRaw("sum(case when estimated_gender = 'female' then 1 else 0 end) as female")
             ->selectRaw("sum(case when estimated_gender = 'male' then 1 else 0 end) as male")
@@ -191,7 +205,8 @@ class PeopleDashboard extends Component
             'total' => (int) $row->total,
             'today' => (int) $row->today,
             'enriched' => $enriched,
-            'pending' => (int) $row->total - $enriched,
+            'pending' => (int) $row->total - $enriched - (int) $row->failed,
+            'failed' => (int) $row->failed,
             'average_age' => $row->average_age !== null ? (int) round($row->average_age) : null,
             'female' => (int) $row->female,
             'male' => (int) $row->male,
@@ -294,7 +309,8 @@ class PeopleDashboard extends Component
             ->when($this->gender === 'unknown', fn (Builder $query) => $query->whereNotNull('enriched_at')->whereNull('estimated_gender'))
             ->when(in_array($this->gender, ['female', 'male']), fn (Builder $query) => $query->where('estimated_gender', $this->gender))
             ->when($this->status === 'enriched', fn (Builder $query) => $query->whereNotNull('enriched_at'))
-            ->when($this->status === 'pending', fn (Builder $query) => $query->whereNull('enriched_at'))
+            ->when($this->status === 'pending', fn (Builder $query) => $query->whereNull('enriched_at')->whereNull('enrichment_failed_at'))
+            ->when($this->status === 'failed', fn (Builder $query) => $query->whereNull('enriched_at')->whereNotNull('enrichment_failed_at'))
             ->when($this->sort === 'name', fn (Builder $query) => $query->orderBy('last_name', $this->direction)->orderBy('first_name', $this->direction))
             ->when($this->sort === 'age', fn (Builder $query) => $query->orderBy('estimated_age', $this->direction))
             ->when($this->sort === 'created', fn (Builder $query) => $query->orderBy('created_at', $this->direction))
