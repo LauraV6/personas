@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Actions\ExportPeopleAsJson;
 use App\Models\Person;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,6 +10,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PeopleDashboard extends Component
 {
@@ -65,9 +67,35 @@ class PeopleDashboard extends Component
         ];
     }
 
+    /**
+     * Downloadt de personen die bij de huidige zoekopdracht en filters horen als JSON.
+     */
+    public function export(ExportPeopleAsJson $export): StreamedResponse
+    {
+        $json = $export->handle($this->filteredPeople()->get());
+
+        return response()->streamDownload(
+            function () use ($json) {
+                echo $json;
+            },
+            'personen-'.now()->format('Y-m-d').'.json',
+            ['Content-Type' => 'application/json'],
+        );
+    }
+
     public function render(): View
     {
-        $people = Person::query()
+        $people = $this->filteredPeople()->paginate(10);
+
+        return view('livewire.people-dashboard', ['people' => $people]);
+    }
+
+    /**
+     * @return Builder<Person>
+     */
+    protected function filteredPeople(): Builder
+    {
+        return Person::query()
             ->when($this->search !== '', function (Builder $query) {
                 // Elk woord moet in de voornaam, achternaam of het e-mailadres voorkomen.
                 foreach (preg_split('/\s+/', trim($this->search)) as $term) {
@@ -82,9 +110,6 @@ class PeopleDashboard extends Component
             ->when($this->status === 'enriched', fn (Builder $query) => $query->whereNotNull('enriched_at'))
             ->when($this->status === 'pending', fn (Builder $query) => $query->whereNull('enriched_at'))
             ->latest()
-            ->latest('id')
-            ->paginate(10);
-
-        return view('livewire.people-dashboard', ['people' => $people]);
+            ->latest('id');
     }
 }

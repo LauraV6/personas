@@ -14,13 +14,14 @@ class ListPeople extends Command
     public function handle(): int
     {
         $this->table(
-            ['Id', 'Naam', 'E-mailadres', 'Leeftijd', 'Geslacht', 'Opgehaald op'],
+            ['Id', 'Naam', 'E-mailadres', 'Leeftijd', 'Geslacht', 'Nationaliteit', 'Opgehaald op'],
             Person::orderBy('id')->get()->map(fn (Person $person) => [
                 $person->id,
                 $person->fullName(),
                 $person->email,
                 $person->estimated_age ?? '-',
                 $person->estimated_gender ?? '-',
+                $person->nationalityLabel() ?? '-',
                 $person->enriched_at?->format('d-m-Y H:i') ?? 'nog niet',
             ]),
         );
