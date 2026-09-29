@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Queue\Attributes\Backoff;
+use Illuminate\Queue\Attributes\DeleteWhenMissingModels;
 use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Support\Facades\Http;
 
@@ -14,9 +15,12 @@ use Illuminate\Support\Facades\Http;
  * Haalt de geschatte leeftijd (agify.io), het geschatte geslacht (genderize.io)
  * en de geschatte nationaliteit (nationalize.io) op basis van de voornaam op
  * en slaat die op bij de persoon.
+ *
+ * Is de persoon verwijderd voordat de job draait, dan verdwijnt de job zonder fout.
  */
 #[Tries(3)]
 #[Backoff(10, 30, 60)]
+#[DeleteWhenMissingModels]
 class EnrichPerson implements ShouldQueue
 {
     use Queueable;
