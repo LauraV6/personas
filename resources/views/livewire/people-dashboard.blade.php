@@ -51,13 +51,6 @@
                         {{ $stats['pending'] }} {{ $stats['pending'] === 1 ? 'wacht' : 'wachten' }} op gegevens
                     </span>
                 @endif
-
-                @if ($stats['failed'] > 0)
-                    <button wire:click="setStatus('failed')" type="button" title="Toon de personen waarbij het ophalen mislukte" class="inline-flex items-center gap-2 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-rose-600/15 transition ring-inset hover:bg-rose-100 focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/20 dark:hover:bg-rose-500/20">
-                        <span class="size-2 rounded-full bg-rose-500"></span>
-                        {{ $stats['failed'] }} mislukt
-                    </button>
-                @endif
             </div>
             <p class="mt-1.5 max-w-xl text-sm text-zinc-500 dark:text-zinc-400">
                 Leeftijd, geslacht en nationaliteit worden na het toevoegen op de achtergrond geschat op basis van de voornaam.
