@@ -25,11 +25,43 @@ class PeopleDashboard extends Component
     #[Url(except: '')]
     public string $status = '';
 
+    #[Url(except: 'created')]
+    public string $sort = 'created';
+
+    #[Url(except: 'desc')]
+    public string $direction = 'desc';
+
     public function updated(string $property): void
     {
         if (in_array($property, ['search', 'gender', 'status'])) {
             $this->resetPage();
         }
+    }
+
+    public function setStatus(string $status): void
+    {
+        $this->status = in_array($status, ['enriched', 'pending']) ? $status : '';
+        $this->resetPage();
+    }
+
+    /**
+     * Klik je op dezelfde kolom, dan draait de volgorde om. Een nieuwe kolom
+     * begint oplopend, behalve "toegevoegd", die begint bij de nieuwste.
+     */
+    public function sortBy(string $column): void
+    {
+        if (! in_array($column, ['name', 'age', 'created'])) {
+            return;
+        }
+
+        if ($this->sort === $column) {
+            $this->direction = $this->direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sort = $column;
+            $this->direction = $column === 'created' ? 'desc' : 'asc';
+        }
+
+        $this->resetPage();
     }
 
     public function resetFilters(): void
@@ -41,13 +73,14 @@ class PeopleDashboard extends Component
     /**
      * Kerncijfers voor de kaarten bovenaan, in één query.
      *
-     * @return array{total: int, enriched: int, pending: int, average_age: ?int, female: int, male: int, unknown: int}
+     * @return array{total: int, today: int, enriched: int, pending: int, average_age: ?int, female: int, male: int, unknown: int}
      */
     #[Computed]
     public function stats(): array
     {
         $row = Person::query()->toBase()
             ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when created_at >= ? then 1 else 0 end) as today', [today()->toDateTimeString()])
             ->selectRaw('count(enriched_at) as enriched')
             ->selectRaw('avg(estimated_age) as average_age')
             ->selectRaw("sum(case when estimated_gender = 'female' then 1 else 0 end) as female")
@@ -58,6 +91,7 @@ class PeopleDashboard extends Component
 
         return [
             'total' => (int) $row->total,
+            'today' => (int) $row->today,
             'enriched' => $enriched,
             'pending' => (int) $row->total - $enriched,
             'average_age' => $row->average_age !== null ? (int) round($row->average_age) : null,
@@ -65,6 +99,54 @@ class PeopleDashboard extends Component
             'male' => (int) $row->male,
             'unknown' => $enriched - (int) $row->female - (int) $row->male,
         ];
+    }
+
+    /**
+     * De drie meest voorkomende nationaliteiten.
+     *
+     * @return list<array{code: string, name: string, flag: string, count: int}>
+     */
+    #[Computed]
+    public function topCountries(): array
+    {
+        return Person::query()->toBase()
+            ->whereNotNull('estimated_nationality')
+            ->selectRaw('estimated_nationality as code, count(*) as count')
+            ->groupBy('estimated_nationality')
+            ->orderByDesc('count')
+            ->orderBy('code')
+            ->limit(3)
+            ->get()
+            ->map(fn (object $row) => [
+                'code' => $row->code,
+                'name' => Person::countryName($row->code),
+                'flag' => Person::countryFlag($row->code),
+                'count' => (int) $row->count,
+            ])
+            ->all();
+    }
+
+    /**
+     * Aantal personen per leeftijdsgroep, voor het histogram op de leeftijdskaart.
+     *
+     * @return array<string, int>
+     */
+    #[Computed]
+    public function ageGroups(): array
+    {
+        $groups = ['<20' => 0, '20' => 0, '30' => 0, '40' => 0, '50' => 0, '60' => 0, '70+' => 0];
+
+        foreach (Person::whereNotNull('estimated_age')->pluck('estimated_age') as $age) {
+            $key = match (true) {
+                $age < 20 => '<20',
+                $age >= 70 => '70+',
+                default => (string) (intdiv($age, 10) * 10),
+            };
+
+            $groups[$key]++;
+        }
+
+        return $groups;
     }
 
     /**
@@ -109,7 +191,9 @@ class PeopleDashboard extends Component
             ->when(in_array($this->gender, ['female', 'male']), fn (Builder $query) => $query->where('estimated_gender', $this->gender))
             ->when($this->status === 'enriched', fn (Builder $query) => $query->whereNotNull('enriched_at'))
             ->when($this->status === 'pending', fn (Builder $query) => $query->whereNull('enriched_at'))
-            ->latest()
-            ->latest('id');
+            ->when($this->sort === 'name', fn (Builder $query) => $query->orderBy('last_name', $this->direction)->orderBy('first_name', $this->direction))
+            ->when($this->sort === 'age', fn (Builder $query) => $query->orderBy('estimated_age', $this->direction))
+            ->when($this->sort === 'created', fn (Builder $query) => $query->orderBy('created_at', $this->direction))
+            ->orderBy('id', $this->direction);
     }
 }
