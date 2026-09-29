@@ -163,27 +163,12 @@
 
                                 <td class="px-4 py-3">
                                     @if ($person->isEnriched())
-                                        <div class="flex items-center gap-3">
-                                            <span @class([
-                                                'inline-flex rounded-md px-2 py-0.5 text-xs font-medium',
-                                                'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' => $person->estimated_gender === 'female',
-                                                'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300' => $person->estimated_gender === 'male',
-                                                'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' => $person->estimated_gender === null,
-                                            ])>{{ $person->genderLabel() }}</span>
-
-                                            @if ($person->estimated_gender !== null && $person->gender_probability !== null)
-                                                <div class="hidden items-center gap-2 sm:flex" title="Zekerheid van genderize.io">
-                                                    <div class="h-1 w-14 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                                                        <div @class([
-                                                            'h-full rounded-full',
-                                                            'bg-rose-400' => $person->estimated_gender === 'female',
-                                                            'bg-sky-400' => $person->estimated_gender === 'male',
-                                                        ]) style="width: {{ $person->gender_probability * 100 }}%"></div>
-                                                    </div>
-                                                    <span class="text-xs text-zinc-500 tabular-nums dark:text-zinc-400">{{ round($person->gender_probability * 100) }}%</span>
-                                                </div>
-                                            @endif
-                                        </div>
+                                        <span @class([
+                                            'inline-flex rounded-md px-2 py-0.5 text-xs font-medium',
+                                            'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' => $person->estimated_gender === 'female',
+                                            'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300' => $person->estimated_gender === 'male',
+                                            'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' => $person->estimated_gender === null,
+                                        ])>{{ $person->genderLabel() }}</span>
                                     @else
                                         <span class="text-zinc-400">-</span>
                                     @endif
