@@ -2,6 +2,7 @@
 
 use App\Livewire\PeopleDashboard;
 use App\Models\Person;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 
 it('shows the dashboard on the homepage', function () {
@@ -144,4 +145,96 @@ it('shows the most common nationalities and age groups', function () {
         ['code' => 'BE', 'name' => 'België', 'flag' => '🇧🇪', 'count' => 1],
     ])
         ->and($dashboard->ageGroups)->toMatchArray(['30' => 2, '70+' => 1, '20' => 0]);
+});
+
+it('edits a person in the dashboard', function () {
+    Queue::fake();
+    $person = Person::factory()->enriched()->create(['first_name' => 'Laura', 'last_name' => 'Vlasma', 'email' => 'laura@example.com']);
+
+    Livewire::test(PeopleDashboard::class)
+        ->call('edit', $person->id)
+        ->assertSet('editingId', $person->id)
+        ->assertSet('form.email', 'laura@example.com')
+        ->assertSee('Persoon bewerken')
+        ->set('form.last_name', 'de Vries')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('editingId', null)
+        ->assertDispatched('notify', message: 'Laura de Vries is bijgewerkt.', type: 'success');
+
+    expect($person->fresh()->last_name)->toBe('de Vries');
+    Queue::assertNothingPushed();
+});
+
+it('shows validation errors in the edit dialog', function () {
+    $person = Person::factory()->create();
+
+    Livewire::test(PeopleDashboard::class)
+        ->call('edit', $person->id)
+        ->set('form.email', 'geen-email')
+        ->set('form.first_name', '')
+        ->call('save')
+        ->assertHasErrors(['form.email', 'form.first_name'])
+        ->assertSee('Vul een geldig e-mailadres in.')
+        ->assertSee('Voornaam is verplicht.')
+        ->assertSet('editingId', $person->id);
+});
+
+it('cancels editing without saving', function () {
+    $person = Person::factory()->create(['last_name' => 'Vlasma']);
+
+    Livewire::test(PeopleDashboard::class)
+        ->call('edit', $person->id)
+        ->set('form.last_name', 'Anders')
+        ->call('cancelEdit')
+        ->assertSet('editingId', null)
+        ->assertDontSee('Persoon bewerken');
+
+    expect($person->fresh()->last_name)->toBe('Vlasma');
+});
+
+it('deletes a person after confirming in the dashboard', function () {
+    $person = Person::factory()->create(['first_name' => 'Sanne', 'last_name' => 'Visser']);
+
+    Livewire::test(PeopleDashboard::class)
+        ->call('confirmDelete', $person->id)
+        ->assertSee('Sanne Visser verwijderen?')
+        ->call('delete')
+        ->assertSet('deletingId', null)
+        ->assertDispatched('notify', message: 'Sanne Visser is verwijderd.')
+        ->assertDontSee('Sanne Visser');
+
+    $this->assertModelMissing($person);
+});
+
+it('handles a person that was deleted elsewhere', function () {
+    $person = Person::factory()->create();
+    $component = Livewire::test(PeopleDashboard::class)->call('edit', $person->id);
+
+    $person->delete();
+
+    $component->call('save')
+        ->assertSet('editingId', null)
+        ->assertDispatched('notify', message: 'Deze persoon bestaat niet meer.', type: 'error');
+});
+
+it('goes back a page when the last person on a page is deleted', function () {
+    Person::factory()->count(11)->create();
+    $last = Person::orderBy('created_at')->orderBy('id')->first();
+
+    Livewire::withQueryParams(['page' => 2])
+        ->test(PeopleDashboard::class)
+        ->assertSee($last->fullName())
+        ->call('confirmDelete', $last->id)
+        ->call('delete')
+        ->assertSet('paginators.page', 1);
+});
+
+it('pauses polling while a dialog is open', function () {
+    $person = Person::factory()->create();
+
+    Livewire::test(PeopleDashboard::class)
+        ->assertSeeHtml('wire:poll')
+        ->call('edit', $person->id)
+        ->assertDontSeeHtml('wire:poll');
 });

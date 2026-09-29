@@ -3,9 +3,11 @@
 namespace App\Livewire;
 
 use App\Actions\ExportPeopleAsJson;
+use App\Actions\UpdatePerson;
 use App\Models\Person;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -30,6 +32,15 @@ class PeopleDashboard extends Component
 
     #[Url(except: 'desc')]
     public string $direction = 'desc';
+
+    /** De persoon die in het bewerkvenster open staat. */
+    public ?int $editingId = null;
+
+    /** @var array{first_name: string, last_name: string, email: string} */
+    public array $form = ['first_name' => '', 'last_name' => '', 'email' => ''];
+
+    /** De persoon waarvoor het verwijdervenster open staat. */
+    public ?int $deletingId = null;
 
     public function updated(string $property): void
     {
@@ -68,6 +79,87 @@ class PeopleDashboard extends Component
     {
         $this->reset('search', 'gender', 'status');
         $this->resetPage();
+    }
+
+    public function edit(int $id): void
+    {
+        $person = Person::find($id);
+
+        if ($person === null) {
+            $this->notify('Deze persoon bestaat niet meer.', 'error');
+
+            return;
+        }
+
+        $this->resetErrorBag();
+        $this->form = $person->only('first_name', 'last_name', 'email');
+        $this->editingId = $person->id;
+    }
+
+    public function cancelEdit(): void
+    {
+        $this->resetErrorBag();
+        $this->reset('editingId', 'form');
+    }
+
+    public function save(UpdatePerson $updatePerson): void
+    {
+        $person = Person::find($this->editingId);
+
+        if ($person === null) {
+            $this->cancelEdit();
+            $this->notify('Deze persoon bestaat niet meer.', 'error');
+
+            return;
+        }
+
+        $oldFirstName = $person->first_name;
+
+        try {
+            $updatePerson->handle($person, $this->form);
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $field => $messages) {
+                $this->addError("form.{$field}", $messages[0]);
+            }
+
+            return;
+        }
+
+        $this->cancelEdit();
+        $this->notify($person->first_name !== $oldFirstName
+            ? "{$person->fullName()} is bijgewerkt. De gegevens worden opnieuw opgehaald."
+            : "{$person->fullName()} is bijgewerkt.");
+    }
+
+    public function confirmDelete(int $id): void
+    {
+        $this->deletingId = Person::whereKey($id)->exists() ? $id : null;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->reset('deletingId');
+    }
+
+    public function delete(): void
+    {
+        $person = Person::find($this->deletingId);
+        $this->reset('deletingId');
+
+        if ($person === null) {
+            $this->notify('Deze persoon bestaat niet meer.', 'error');
+
+            return;
+        }
+
+        $person->delete();
+        $this->notify("{$person->fullName()} is verwijderd.");
+    }
+
+    #[Computed]
+    public function deletingPerson(): ?Person
+    {
+        return $this->deletingId !== null ? Person::find($this->deletingId) : null;
     }
 
     /**
@@ -169,6 +261,12 @@ class PeopleDashboard extends Component
     {
         $people = $this->filteredPeople()->paginate(10);
 
+        // Na een verwijdering kan de laatste pagina leeg zijn, spring dan terug.
+        if ($people->isEmpty() && $people->currentPage() > 1) {
+            $this->setPage($people->lastPage());
+            $people = $this->filteredPeople()->paginate(10);
+        }
+
         return view('livewire.people-dashboard', ['people' => $people]);
     }
 
@@ -195,5 +293,10 @@ class PeopleDashboard extends Component
             ->when($this->sort === 'age', fn (Builder $query) => $query->orderBy('estimated_age', $this->direction))
             ->when($this->sort === 'created', fn (Builder $query) => $query->orderBy('created_at', $this->direction))
             ->orderBy('id', $this->direction);
+    }
+
+    protected function notify(string $message, string $type = 'success'): void
+    {
+        $this->dispatch('notify', message: $message, type: $type);
     }
 }
