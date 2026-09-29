@@ -17,6 +17,7 @@ use Locale;
     'gender_probability',
     'estimated_nationality',
     'enriched_at',
+    'enrichment_failed_at',
 ])]
 class Person extends Model
 {
@@ -34,6 +35,7 @@ class Person extends Model
             'estimated_age' => 'integer',
             'gender_probability' => 'float',
             'enriched_at' => 'datetime',
+            'enrichment_failed_at' => 'datetime',
         ];
     }
 
@@ -50,6 +52,14 @@ class Person extends Model
     public function isEnriched(): bool
     {
         return $this->enriched_at !== null;
+    }
+
+    /**
+     * Het ophalen is na alle pogingen mislukt en er komt geen nieuwe poging vanzelf.
+     */
+    public function enrichmentFailed(): bool
+    {
+        return ! $this->isEnriched() && $this->enrichment_failed_at !== null;
     }
 
     public function genderLabel(): string

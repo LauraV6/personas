@@ -10,6 +10,7 @@ use Illuminate\Queue\Attributes\Backoff;
 use Illuminate\Queue\Attributes\DeleteWhenMissingModels;
 use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 /**
  * Haalt de geschatte leeftijd (agify.io), het geschatte geslacht (genderize.io)
@@ -54,6 +55,16 @@ class EnrichPerson implements ShouldQueue
             'gender_probability' => $gender['probability'] ?? null,
             'estimated_nationality' => $country['country_id'] ?? null,
             'enriched_at' => now(),
+            'enrichment_failed_at' => null,
         ]);
+    }
+
+    /**
+     * Na de laatste mislukte poging markeren we de persoon, zodat het dashboard
+     * "Mislukt" toont in plaats van eindeloos "Wacht op gegevens".
+     */
+    public function failed(?Throwable $exception): void
+    {
+        $this->person->update(['enrichment_failed_at' => now()]);
     }
 }

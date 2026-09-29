@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\EnrichPerson;
 use App\Livewire\PeopleDashboard;
 use App\Models\Person;
 use Illuminate\Support\Facades\Queue;
@@ -31,6 +32,7 @@ it('calculates the stats', function () {
         'today' => 4,
         'enriched' => 3,
         'pending' => 1,
+        'failed' => 0,
         'average_age' => 36,
         'female' => 1,
         'male' => 1,
@@ -237,4 +239,51 @@ it('pauses polling while a dialog is open', function () {
         ->assertSeeHtml('wire:poll')
         ->call('edit', $person->id)
         ->assertDontSeeHtml('wire:poll');
+});
+
+it('shows failed enrichments separately from waiting ones', function () {
+    Person::factory()->create(['first_name' => 'Wilhelmina']);
+    Person::factory()->create(['first_name' => 'Mislukte', 'enrichment_failed_at' => now()]);
+
+    $component = Livewire::test(PeopleDashboard::class);
+
+    expect($component->instance()->stats)->toMatchArray(['pending' => 1, 'failed' => 1]);
+
+    $component
+        ->assertSee('1 mislukt')
+        ->call('setStatus', 'failed')
+        ->assertSee('Mislukte')
+        ->assertDontSee('Wilhelmina')
+        ->call('setStatus', 'pending')
+        ->assertSee('Wilhelmina')
+        ->assertDontSee('Mislukte');
+});
+
+it('does not poll when the only unfinished people have failed', function () {
+    Person::factory()->create(['enrichment_failed_at' => now()]);
+
+    Livewire::test(PeopleDashboard::class)->assertDontSeeHtml('wire:poll');
+});
+
+it('retries a failed enrichment', function () {
+    Queue::fake();
+    $person = Person::factory()->create(['first_name' => 'Sanne', 'last_name' => 'Visser', 'enrichment_failed_at' => now()]);
+
+    Livewire::test(PeopleDashboard::class)
+        ->assertSeeHtml('title="Opnieuw proberen"')
+        ->call('retry', $person->id)
+        ->assertDispatched('notify', message: 'De gegevens van Sanne Visser worden opnieuw opgehaald.')
+        ->assertDontSeeHtml('title="Opnieuw proberen"');
+
+    expect($person->fresh()->enrichment_failed_at)->toBeNull();
+    Queue::assertPushed(EnrichPerson::class, fn (EnrichPerson $job) => $job->person->is($person));
+});
+
+it('ignores a retry for a person that did not fail', function () {
+    Queue::fake();
+    $person = Person::factory()->enriched()->create();
+
+    Livewire::test(PeopleDashboard::class)->call('retry', $person->id)->assertNotDispatched('notify');
+
+    Queue::assertNothingPushed();
 });

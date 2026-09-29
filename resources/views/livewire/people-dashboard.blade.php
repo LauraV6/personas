@@ -24,6 +24,9 @@
         'enriched' => ['Aangevuld', $stats['enriched']],
         'pending' => ['Wachtend', $stats['pending']],
     ];
+    if ($stats['failed'] > 0 || $status === 'failed') {
+        $tabs['failed'] = ['Mislukt', $stats['failed']];
+    }
 
     $card = 'relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm shadow-zinc-900/[0.03] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none';
     $iconBox = 'flex size-9 items-center justify-center rounded-xl';
@@ -47,6 +50,13 @@
                         <span class="size-2 rounded-full bg-amber-500"></span>
                         {{ $stats['pending'] }} {{ $stats['pending'] === 1 ? 'wacht' : 'wachten' }} op gegevens
                     </span>
+                @endif
+
+                @if ($stats['failed'] > 0)
+                    <button wire:click="setStatus('failed')" type="button" title="Toon de personen waarbij het ophalen mislukte" class="inline-flex items-center gap-2 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-rose-600/15 transition ring-inset hover:bg-rose-100 focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/20 dark:hover:bg-rose-500/20">
+                        <span class="size-2 rounded-full bg-rose-500"></span>
+                        {{ $stats['failed'] }} mislukt
+                    </button>
                 @endif
             </div>
             <p class="mt-1.5 max-w-xl text-sm text-zinc-500 dark:text-zinc-400">
@@ -112,8 +122,11 @@
             <div class="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800">
                 <div class="flex items-center justify-between text-xs">
                     <span class="text-zinc-500 dark:text-zinc-400">
-                        @if ($stats['pending'] > 0)
-                            {{ $stats['pending'] }} {{ $stats['pending'] === 1 ? 'wacht' : 'wachten' }} op gegevens
+                        @if ($stats['pending'] > 0 || $stats['failed'] > 0)
+                            {{ collect([
+                                $stats['pending'] > 0 ? $stats['pending'].' '.($stats['pending'] === 1 ? 'wacht' : 'wachten') : null,
+                                $stats['failed'] > 0 ? $stats['failed'].' mislukt' : null,
+                            ])->filter()->join(', ') }}
                         @else
                             Alles is bijgewerkt
                         @endif
@@ -190,7 +203,10 @@
     <section class="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm shadow-zinc-900/[0.03] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
         <div class="flex flex-col gap-3 border-b border-zinc-200/80 p-3 lg:flex-row lg:items-center lg:justify-between dark:border-zinc-800">
             {{-- Status als tabbladen --}}
-            <nav class="grid grid-cols-3 gap-1 rounded-xl bg-zinc-100/80 p-1 sm:inline-flex sm:self-start lg:self-auto dark:bg-zinc-800/60" aria-label="Status">
+            <nav @class([
+                'grid gap-1 rounded-xl bg-zinc-100/80 p-1 sm:inline-flex sm:self-start lg:self-auto dark:bg-zinc-800/60',
+                count($tabs) > 3 ? 'grid-cols-2' : 'grid-cols-3',
+            ]) aria-label="Status">
                 @foreach ($tabs as $value => [$label, $count])
                     <button wire:click="setStatus('{{ $value }}')" type="button" aria-pressed="{{ $status === $value ? 'true' : 'false' }}" @class([
                         'inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none sm:gap-2 sm:px-3',
