@@ -225,9 +225,12 @@
                     <input wire:model.live.debounce.300ms="search" type="search" placeholder="Zoek op naam of e-mailadres" class="{{ $field }} w-full pl-9">
                 </label>
 
-                <label>
+                <label class="relative">
                     <span class="sr-only">Geslacht</span>
-                    <select wire:model.live="gender" class="{{ $field }} w-full pr-8 sm:w-auto">
+                    <svg class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                    <select wire:model.live="gender" class="{{ $field }} w-full appearance-none pr-10 sm:w-auto">
                         <option value="">Elk geslacht</option>
                         <option value="female">Vrouw</option>
                         <option value="male">Man</option>
