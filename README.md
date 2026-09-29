@@ -4,20 +4,18 @@ Kleine Laravel-applicatie voor het beheren van personen. Een persoon wordt via d
 
 ## Installatie
 
+Vereist PHP 8.3 of hoger met de intl-extensie, Composer en Node.js.
+
 ```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-touch database/database.sqlite
-php artisan migrate
-npm install
-npm run build
+composer setup        # installeert alles, maakt .env en de SQLite-database, draait de migraties en bouwt de frontend
+php artisan db:seed   # optioneel: 12 voorbeeldpersonen, zonder de API's aan te roepen
 ```
 
-Voorbeelddata, zonder de API's aan te roepen:
+Starten, in twee terminalvensters:
 
 ```bash
-php artisan db:seed
+php artisan serve       # dashboard op http://127.0.0.1:8000
+php artisan queue:work  # haalt leeftijd, geslacht en nationaliteit op
 ```
 
 ## Gebruik
