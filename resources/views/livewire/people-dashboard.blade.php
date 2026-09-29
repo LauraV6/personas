@@ -54,7 +54,7 @@
             </p>
         </div>
 
-        <button wire:click="export" wire:loading.attr="disabled" wire:target="export" type="button" title="Download de personen die bij je filters horen als JSON" class="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-xl bg-zinc-900 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-700 focus-visible:ring-4 focus-visible:ring-zinc-900/20 focus-visible:outline-none disabled:opacity-60 sm:self-auto dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+        <button wire:click="export" wire:loading.attr="disabled" wire:target="export" type="button" title="Download de personen die bij je filters horen als JSON" class="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-500 focus-visible:ring-4 focus-visible:ring-indigo-500/30 focus-visible:outline-none disabled:opacity-60 sm:self-auto dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400">
             <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
